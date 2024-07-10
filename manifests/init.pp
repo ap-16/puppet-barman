@@ -415,7 +415,7 @@ class barman (
   file { '/etc/logrotate.d/barman':
     ensure  => $ensure_file,
     owner   => 'root',
-    group   => $group,
+    group   => 'root',
     mode    => '0644',
     content => epp($logrotate_template, {
                      logfile                       => $logfile,
