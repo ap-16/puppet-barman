@@ -349,7 +349,7 @@ define barman::server (
   file { "/etc/barman.conf.d/${name}.conf":
     ensure  => $ensure,
     mode    => '0640',
-    owner   => $barman::user,
+    owner   => 'root',
     group   => $barman::group,
     content => epp($conf_template, {
                      archiver                      => $archiver,

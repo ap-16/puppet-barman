@@ -338,7 +338,7 @@ class barman (
       ensure  => $ensure_directory,
       purge   => $purge_unknown_conf,
       recurse => true,
-      owner   => $user,
+      owner   => 'root',
       group   => $group,
       mode    => '0750',
       require => Package['barman'],
@@ -348,7 +348,7 @@ class barman (
 
   file { $conf_file_path:
     ensure  => $ensure_file,
-    owner   => $user,
+    owner   => 'root',
     group   => $group,
     mode    => '0640',
     content => epp($conf_template, {
