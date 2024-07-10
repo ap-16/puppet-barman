@@ -329,7 +329,8 @@ class barman (
     recurse => true,
     owner   => 'root',
     group   => $group,
-    mode    => '0750',
+    #mode    => '0750',
+    mode    => 'u+rwX,g-w,o-rwx',
     require => Package['barman'],
   }
 
