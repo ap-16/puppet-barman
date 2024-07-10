@@ -12,5 +12,6 @@
     compress
     missingok
     notifempty
-    create 0640 <%= $user %> <%= $group %>
+    create 0640 <%= $user %> adm
+    #create 0640 <%= $user %> <%= $group %>
 }
