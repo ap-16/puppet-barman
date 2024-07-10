@@ -1,0 +1,16 @@
+<%- |
+    Stdlib::Absolutepath               $logfile,
+    String                             $user,
+    String                             $group,
+    | -%>
+# managed by puppet!
+
+<%= $logfile %> {
+    weekly
+    rotate 4
+    delaycompress
+    compress
+    missingok
+    notifempty
+    create 0640 <%= $user %> <%= $group %>
+}

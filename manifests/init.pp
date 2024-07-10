@@ -4,59 +4,78 @@
 #
 # === Parameters
 #
-# [*user*] - The Barman user. Its value is set by 'settings' class.
-# [*group*] - The group of the Barman user. Its value is set by 'settings'
-#             class.
-# [*ensure*] - Ensure that Barman is installed. The default value is 'present'.
-#              Otherwise it will be set as 'absent'.
-# [*conf_template*] - Path of the template of the barman.conf configuration
-#                     file. The default value does not need to be changed.
-# [*logrotate_template*] - Path of the template of the logrotate.conf file.
-#                          The default value does not need to be changed.
-# [*home*] - A different place for backups than the default. Will be symlinked
-#            to the default (/var/lib/barman). You should not change this
-#            value after the first setup. Its value is set by the 'settings'
-#            class.
-# [*logfile*] - A different log file. The default is
-#               '/var/log/barman/barman.log'
-# [*archiver*] - Whether the log shipping backup mechanism is active or not
-#                (defaults to true)
-# [*archiver_batch_size*] - Setting this option enables batch processing of WAL
-#                           files. The default processes all currently available
-#                           files.
-# [*backup_directory*] - Directory where backup data for a server will be placed.
-# [*backup_method*] - Configure the method barman used for backup execution. If
-#                     set to rsync (default), barman will execute backup using the
-#                     rsync command. If set to postgres barman will use the
-#                     pg_basebackup command to execute the backup.
-# [*backup_options*] - Behavior for backup operations: possible values are
-#                      exclusive_backup (default) and concurrent_backup.
-# [*bandwidth_limit*] - This option allows you to specify a maximum transfer rate
-#                       in kilobytes per second. A value of zero specifies no
-#                       limit (default).
-# [*check_timeout*] - Maximum execution time, in seconds per server, for a barman
-#                     check command. Set to 0 to disable the timeout. Positive
-#                     integer, default 30.
-# [*compression*] - Compression algorithm. Currently supports 'gzip' (default),
-#                   'bzip2', and 'custom'. Disabled if false.
-# [*custom_compression_filter*] - Customised compression algorithm applied to WAL
-#                                 files.
-# [*custom_decompression_filter*] - Customised decompression algorithm applied to
-#                                   compressed WAL files; this must match the
-#                                   compression algorithm.
-# [*immediate_checkpoint*] - Force the checkpoint on the Postgres server to
-#                            happen immediately and start your backup copy
-#                            process as soon as possible. Disabled if false
-#                           (default)
-# [*basebackup_retry_times*] - Number of retries fo data copy during base
-#                              backup after an error. Default = 0
-# [*basebackup_retry_sleep*] - Number of seconds to wait after after a failed
-#                              copy, before retrying. Default = 30
-# [*minimum_redundancy*] - Minimum number of required backups (redundancy).
-#                          Default = 0
-# [*network_compression*] - This option allows you to enable data compression for
-#                           network transfers. Defaults to false.
-# [*path_prefix*] - One or more absolute paths, separated by colon, where Barman
+# @param user
+#   The Barman user. Default `barman`.
+# @param group
+#   The group of the Barman user
+# @param ensure
+#   Ensure that Barman is installed. The default value is 'present'.
+#   Otherwise it will be set as 'absent'.
+# @param dbuser
+#   Username used for connecting to the database
+# @param dbname
+# @param conf_template
+#   Path of the EPP template of the barman.conf configuration
+#    file. The default value does not need to be changed.
+# @param logrotate_template
+#   Path of the EPP template of the logrotate.conf file.
+#   The default value does not need to be changed.
+# @param home
+#   A different place for backups than the default. Will be symlinked
+#   to the default (/var/lib/barman). You should not change this
+#     value after the first setup.
+# @param logfile
+#   A different log file. The default is '/var/log/barman/barman.log'
+# @param log_level
+#   Level of logging. The default is INFO
+#   (DEBUG, INFO, WARNING, ERROR, CRITICAL). Global.
+# @param archiver
+#   Whether the log shipping backup mechanism is active or not (defaults to true)
+# @param archiver_batch_size
+#   Setting this option enables batch processing of WAL files.
+#   The default processes all currently available files.
+# @param backup_directory
+#   Directory where backup data for a server will be placed.
+# @param backup_method
+#   Configure the method barman used for backup execution. If set to rsync (default),
+#   barman will execute backup using the rsync command. If set to postgres barman will use the
+#   pg_basebackup command to execute the backup.
+# @param backup_options
+#   Behavior for backup operations: possible values are exclusive_backup (default) and concurrent_backup.
+# @param recovery_options
+#   The restore command to write in the recovery.conf.
+#   Possible values are 'get-wal' and undef. Default: undef.
+# @param bandwidth_limit
+#   This option allows you to specify a maximum transfer rate in kilobytes per second.
+#   A value of zero specifies no limit (default).
+# @param barman_lock_directory
+#   Global option for a directory for lock files.
+# @param check_timeout
+#  Maximum execution time, in seconds per server, for a barman
+#  check command. Set to 0 to disable the timeout. Positive integer, default 30.
+# @param compression
+#   Compression algorithm. Currently supports 'gzip' (default),
+#   'bzip2', and 'custom'. Disabled if false.
+# @param custom_compression_filter
+#   Customised compression algorithm applied to WAL files.
+# @param custom_decompression_filter
+#   Customised decompression algorithm applied to compressed WAL files; this must match the
+#   compression algorithm.
+# @param immediate_checkpoint
+#   Force the checkpoint on the Postgres server to happen immediately and start your backup copy
+#   process as soon as possible. Disabled if false (default)
+# @param basebackup_retry_times
+#   Number of retries fo data copy during base backup after an error. Default = 0
+# @param basebackup_retry_sleep
+#   Number of seconds to wait after after a failed copy, before retrying. Default = 30
+# @param minimum_redundancy
+#   Minimum number of required backups (redundancy). Default = 0
+# @param network_compression
+# This option allows you to enable data compression for network transfers. Defaults to false.
+# @param parallel_jobs
+#  Number of parallel workers used to copy files during backup or recovery. Requires backup mode = rsync.
+# @param path_prefix
+# One or more absolute paths, separated by colon, where Barman
 #                   looks for executable files.
 # [*last_backup_maximum_age*] - Time frame that must contain the latest backup
 #                               date. If the latest backup is older than the
@@ -213,150 +232,71 @@
 # Copyright 2012-2017 2ndQuadrant Italia
 #
 class barman (
-  $user                          = $::barman::settings::user,
-  $group                         = $::barman::settings::group,
-  $ensure                        = 'present',
-  $conf_template                 = 'barman/barman.conf.erb',
-  $logrotate_template            = 'barman/logrotate.conf.erb',
-  $barman_fqdn                   = $::fqdn,
-  $archiver                      = $::barman::settings::archiver,
-  $archiver_batch_size           = $::barman::settings::archiver_batch_size,
-  $autoconfigure                 = $::barman::settings::autoconfigure,
-  $backup_method                 = $::barman::settings::backup_method,
-  $backup_options                = $::barman::settings::backup_options,
-  $bandwidth_limit               = $::barman::settings::bandwidth_limit,
-  $basebackup_retry_sleep        = $::barman::settings::basebackup_retry_sleep,
-  $basebackup_retry_times        = $::barman::settings::basebackup_retry_times,
-  $check_timeout                 = $::barman::settings::check_timeout,
-  $compression                   = $::barman::settings::compression,
-  $custom_compression_filter     = $::barman::settings::custom_compression_filter,
-  $custom_decompression_filter   = $::barman::settings::custom_decompression_filter,
-  $exported_ipaddress            = "${::ipaddress}/32",
-  $home                          = $::barman::settings::home,
-  $host_group                    = $::barman::settings::host_group,
-  $immediate_checkpoint          = $::barman::settings::immediate_checkpoint,
-  $last_backup_maximum_age       = $::barman::settings::last_backup_maximum_age,
-  $logfile                       = $::barman::settings::logfile,
-  $manage_package_repo           = $::barman::settings::manage_package_repo,
-  $minimum_redundancy            = $::barman::settings::minimum_redundancy,
-  $network_compression           = $::barman::settings::network_compression,
-  $path_prefix                   = $::barman::settings::path_prefix,
-  $post_archive_retry_script     = $::barman::settings::post_archive_retry_script,
-  $post_archive_script           = $::barman::settings::post_archive_script,
-  $post_backup_retry_script      = $::barman::settings::post_backup_retry_script,
-  $post_backup_script            = $::barman::settings::post_backup_script,
-  $pre_archive_retry_script      = $::barman::settings::pre_archive_retry_script,
-  $pre_archive_script            = $::barman::settings::pre_archive_script,
-  $pre_backup_retry_script       = $::barman::settings::pre_backup_retry_script,
-  $pre_backup_script             = $::barman::settings::pre_backup_script,
-  $purge_unknown_conf            = $::barman::settings::purge_unknown_conf,
-  $retention_policy              = $::barman::settings::retention_policy,
-  $retention_policy_mode         = $::barman::settings::retention_policy_mode,
-  $reuse_backup                  = $::barman::settings::reuse_backup,
-  $slot_name                     = $::barman::settings::slot_name,
-  $streaming_archiver            = $::barman::settings::streaming_archiver,
-  $streaming_archiver_batch_size = $::barman::settings::streaming_archiver_batch_size,
-  $streaming_archiver_name       = $::barman::settings::streaming_archiver_name,
-  $streaming_backup_name         = $::barman::settings::streaming_backup_name,
-  $tablespace_bandwidth_limit    = $::barman::settings::tablespace_bandwidth_limit,
-  $wal_retention_policy          = $::barman::settings::wal_retention_policy,
-  $custom_lines                  = $::barman::settings::custom_lines,
-) inherits barman::settings {
-
-  # Check if autoconfigure is a boolean
-  validate_bool($autoconfigure)
-
-  # Check if minimum_redundancy is a number
-  validate_re($minimum_redundancy, [ '^[0-9]+$' ])
-
-  # Check if backup_options has correct values
-  validate_re($backup_options, [ '^exclusive_backup$', '^concurrent_backup$'], 'Invalid backup option please use exclusive_backup or concurrent_backup')
-
-  # Check if immediate checkpoint is a boolean
-  validate_bool($immediate_checkpoint)
-
-  # Check to make sure basebackup_retry_times is a numerical value
-  if $basebackup_retry_times != false {
-    validate_re($basebackup_retry_times, [ '^[0-9]+$' ])
-  }
-  # Check to make sure basebackup_retry_sleep is a numerical value
-  if $basebackup_retry_sleep != false {
-    validate_re($basebackup_retry_sleep, [ '^[0-9]+$' ])
-  }
-
-  # Check to make sure last_backup_maximum_age identifies (DAYS | WEEKS | MONTHS) greater then 0
-  if $last_backup_maximum_age != false {
-    validate_re($last_backup_maximum_age, [ '^[1-9][0-9]* (DAY|WEEK|MONTH)S?$' ])
-  }
-
-  # Check to make sure retention_policy has correct value
-  validate_re($retention_policy, [ '^(^$|REDUNDANCY [1-9][0-9]*|RECOVERY WINDOW OF [1-9][0-9]* (DAY|WEEK|MONTH)S?)$' ])
-
-  # Check to make sure retention_policy_mode is set to auto
-  validate_re($retention_policy_mode, [ '^auto$' ])
-
-  # Check to make sure wal_retention_policy is set to main
-  validate_re($wal_retention_policy, [ '^main$' ])
-
-  validate_bool($archiver)
-
-  if $archiver_batch_size != undef {
-    validate_integer($archiver_batch_size)
-  }
-
-  if $backup_method != undef {
-    validate_re($backup_method, '^(rsync|postgres)$')
-  }
-
-  if $bandwidth_limit != undef {
-    validate_integer($bandwidth_limit)
-  }
-
-  if $check_timeout != undef {
-    validate_integer($check_timeout)
-  }
-
-  if $custom_compression_filter != undef {
-    validate_string($custom_compression_filter)
-  }
-
-  if $custom_decompression_filter != undef {
-    validate_string($custom_decompression_filter)
-  }
-
-  if $network_compression != undef {
-    validate_bool($network_compression)
-  }
-
-  if $path_prefix != undef {
-    validate_absolute_path($path_prefix)
-  }
-
-  if $slot_name != undef {
-    validate_string($slot_name)
-  }
-
-  validate_bool($streaming_archiver)
-
-  if $streaming_archiver_batch_size != undef {
-    validate_integer($streaming_archiver_batch_size)
-  }
-
-  if $streaming_archiver_name != undef {
-    validate_string($streaming_archiver_name)
-  }
-
-  if $streaming_backup_name != undef {
-    validate_string($streaming_backup_name)
-  }
-
-  if $tablespace_bandwidth_limit != undef {
-    validate_string($tablespace_bandwidth_limit)
-  }
-
-  # Check to make sure reuse_backup has correct value
-  if $reuse_backup != false {
-    validate_re($reuse_backup, [ '^(off|link|copy)$' ])
+  String                             $user,
+  String                             $group,
+  String                             $ensure,
+  Boolean                            $archiver,
+  Boolean                            $autoconfigure,
+  Variant[String,Boolean]            $compression,
+  String                             $dbuser,
+  Stdlib::Absolutepath               $home,
+  String                             $home_mode,
+  String                             $host_group,
+  String                             $dbname,
+  Boolean                            $immediate_checkpoint,
+  Stdlib::Absolutepath               $logfile,
+  Barman::LogLevel                   $log_level,
+  Boolean                            $manage_package_repo,
+  Boolean                            $manage_ssh_host_keys,
+  Integer                            $minimum_redundancy,
+  Boolean                            $purge_unknown_conf,
+  Boolean                            $streaming_archiver,
+  String                             $archive_cmd_type,
+  Integer                            $hba_entry_order,
+  String                             $conf_file_path                = $barman::conf_file_path,
+  String                             $conf_template                 = 'barman/barman.conf.epp',
+  String                             $logrotate_template            = 'barman/logrotate.conf.epp',
+  String                             $barman_fqdn                   = $facts['networking']['fqdn'],
+  Optional[Integer]                  $archiver_batch_size           = undef,
+  Barman::BackupMethod               $backup_method                 = undef,
+  Barman::BackupOptions              $backup_options                = undef,
+  Optional[Integer]                  $bandwidth_limit               = undef,
+  Optional[String]                   $barman_lock_directory         = undef,
+  Optional[Integer]                  $basebackup_retry_sleep        = undef,
+  Optional[Integer]                  $basebackup_retry_times        = undef,
+  Optional[Integer]                  $check_timeout                 = undef,
+  Optional[String]                   $custom_compression_filter     = undef,
+  Optional[String]                   $custom_decompression_filter   = undef,
+  Stdlib::IP::Address                $exported_ipaddress            = "${facts['networking']['ip']}/32",
+  Barman::BackupAge                  $last_backup_maximum_age        = undef,
+  Optional[Boolean]                  $network_compression            = undef,
+  Optional[Integer]                  $parallel_jobs                  = undef,
+  Optional[Stdlib::Absolutepath]     $path_prefix                    = undef,
+  Optional[String]                   $post_archive_retry_script      = undef,
+  Optional[String]                   $post_archive_script            = undef,
+  Optional[String]                   $post_backup_retry_script       = undef,
+  Optional[String]                   $post_backup_script             = undef,
+  Optional[String]                   $pre_archive_retry_script       = undef,
+  Optional[String]                   $pre_archive_script             = undef,
+  Optional[String]                   $pre_backup_retry_script        = undef,
+  Optional[String]                   $pre_backup_script              = undef,
+  Barman::RecoveryOptions            $recovery_options               = undef,
+  Barman::RetentionPolicy            $retention_policy               = undef,
+  Barman::RetentionPolicyMode        $retention_policy_mode          = undef,
+  Barman::ReuseBackup                $reuse_backup                   = undef,
+  Optional[String]                   $slot_name                      = undef,
+  Optional[Integer]                  $streaming_archiver_batch_size  = undef,
+  Optional[String]                   $streaming_archiver_name        = undef,
+  Optional[String]                   $streaming_backup_name          = undef,
+  Optional[String]                   $tablespace_bandwidth_limit     = undef,
+  Barman::WalRetention               $wal_retention_policy           = undef,
+  Optional[String]                   $custom_lines                   = undef,
+  Optional[Hash]                     $servers                        = undef,
+  Optional[Stdlib::Absolutepath]     $streaming_wals_directory       = undef,
+) {
+  # when hash data is in servers, then fire-off barman::server define with that hash data
+  if ($servers) {
+    create_resources('barman::server', deep_merge(hiera_hash('barman::servers', {}), $servers))
   }
 
   # Ensure creation (or removal) of Barman files and directories
@@ -393,13 +333,68 @@ class barman (
     require => Package['barman'],
   }
 
-  file { '/etc/barman.conf':
+  if $conf_file_path == '/etc/barman/barman.conf' {
+    file { '/etc/barman':
+      ensure  => $ensure_directory,
+      purge   => $purge_unknown_conf,
+      recurse => true,
+      owner   => $user,
+      group   => $group,
+      mode    => '0750',
+      require => Package['barman'],
+      before  => File['/etc/barman/barman.conf'],
+    }
+  }
+
+  file { $conf_file_path:
     ensure  => $ensure_file,
-    owner   => 'root',
+    owner   => $user,
     group   => $group,
     mode    => '0640',
-    content => template($conf_template),
-    require => File['/etc/barman.conf.d'],
+    content => epp($conf_template, {
+                     user                          => $user,
+                     archiver                      => $archiver,
+                     compression                   => $compression,
+                     home                          => $home,
+                     immediate_checkpoint          => $immediate_checkpoint,
+                     logfile                       => $logfile,
+                     log_level                     => $log_level,
+                     minimum_redundancy            => $minimum_redundancy,
+                     streaming_archiver            => $streaming_archiver,
+                     archiver_batch_size           => $archiver_batch_size,
+                     backup_method                 => $backup_method,
+                     backup_options                => $backup_options,
+                     bandwidth_limit               => $bandwidth_limit,
+                     barman_lock_directory         => $barman_lock_directory,
+                     basebackup_retry_sleep        => $basebackup_retry_sleep,
+                     basebackup_retry_times        => $basebackup_retry_times,
+                     check_timeout                 => $check_timeout,
+                     custom_compression_filter     => $custom_compression_filter,
+                     custom_decompression_filter   => $custom_decompression_filter,
+                     last_backup_maximum_age       => $last_backup_maximum_age,
+                     network_compression           => $network_compression,
+                     parallel_jobs                 => $parallel_jobs,
+                     path_prefix                   => $path_prefix,
+                     post_archive_retry_script     => $post_archive_retry_script,
+                     post_archive_script           => $post_archive_script,
+                     post_backup_retry_script      => $post_backup_retry_script,
+                     post_backup_script            => $post_backup_script,
+                     pre_archive_retry_script      => $pre_archive_retry_script,
+                     pre_archive_script            => $pre_archive_script,
+                     pre_backup_retry_script       => $pre_backup_retry_script,
+                     pre_backup_script             => $pre_backup_script,
+                     recovery_options              => $recovery_options,
+                     retention_policy              => $retention_policy,
+                     retention_policy_mode         => $retention_policy_mode,
+                     reuse_backup                  => $reuse_backup,
+                     slot_name                     => $slot_name,
+                     streaming_archiver_batch_size => $streaming_archiver_batch_size,
+                     streaming_archiver_name       => $streaming_archiver_name,
+                     streaming_backup_name         => $streaming_backup_name,
+                     tablespace_bandwidth_limit    => $tablespace_bandwidth_limit,
+                     wal_retention_policy          => $wal_retention_policy,
+                     custom_lines                  => $custom_lines,
+               }),
   }
 
   file { $home:
@@ -422,8 +417,12 @@ class barman (
     owner   => 'root',
     group   => $group,
     mode    => '0644',
-    content => template($logrotate_template),
-    require => Package['barman']
+    content => epp($logrotate_template, {
+                     logfile                       => $logfile,
+                     user                          => $user,
+                     group                         => $group,
+               }),
+    require => Package['barman'],
   }
 
   # Set the autoconfiguration
