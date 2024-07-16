@@ -3,9 +3,11 @@
     Boolean                            $archiver,
     Variant[String,Boolean]            $compression,
     Stdlib::Absolutepath               $home,
+    Optional[Boolean]                  $forward_config_path           =undef,
     Boolean                            $immediate_checkpoint,
     Stdlib::Absolutepath               $logfile,
     Barman::LogLevel                   $log_level,
+    Optional[Integer]                  $max_incoming_wals_queue       = undef,
     Integer                            $minimum_redundancy,
     Boolean                            $streaming_archiver,
     Optional[Integer]                  $archiver_batch_size           = undef,
@@ -16,26 +18,52 @@
     Optional[Integer]                  $basebackup_retry_sleep        = undef,
     Optional[Integer]                  $basebackup_retry_times        = undef,
     Optional[Integer]                  $check_timeout                 = undef,
+    Optional[Barman::CreateSlot]       $create_slot                   = undef,
     Optional[String]                   $custom_compression_filter     = undef,
+    Optional[Any]                      $custom_compression_magic      = undef,
     Optional[String]                   $custom_decompression_filter   = undef,
     Barman::BackupAge                  $last_backup_maximum_age       = undef,
+    Optional[String]                   $last_backup_minimum_size      = undef,
+    Barman::BackupAge                  $last_wal_maximum_age          = undef,
     Optional[Boolean]                  $network_compression           = undef,
     Optional[Integer]                  $parallel_jobs                 = undef,
+    Optional[Integer]                  $parallel_jobs_start_batch_period    = undef,
+    Optional[Integer]                  $parallel_jobs_start_batch_size      = undef,
     Optional[Stdlib::Absolutepath]     $path_prefix                   = undef,
     Optional[String]                   $post_archive_retry_script     = undef,
     Optional[String]                   $post_archive_script           = undef,
     Optional[String]                   $post_backup_retry_script      = undef,
     Optional[String]                   $post_backup_script            = undef,
+    Optional[String]                   $post_delete_retry_script      = undef,
+    Optional[String]                   $post_delete_script            = undef,
+    Optional[String]                   $post_recovery_retry_script    = undef,
+    Optional[String]                   $post_recovery_script          = undef,
+    Optional[String]                   $post_wal_delete_retry_script  = undef,
+    Optional[String]                   $post_wal_delete_script        = undef,
     Optional[String]                   $pre_archive_retry_script      = undef,
     Optional[String]                   $pre_archive_script            = undef,
     Optional[String]                   $pre_backup_retry_script       = undef,
     Optional[String]                   $pre_backup_script             = undef,
+    Optional[String]                   $pre_delete_retry_script       = undef,
+    Optional[String]                   $pre_delete_script             = undef,
+    Optional[String]                   $pre_recovery_retry_script     = undef,
+    Optional[String]                   $pre_recovery_script           = undef,
+    Optional[String]                   $pre_wal_delete_retry_script   = undef,
+    Optional[String]                   $pre_wal_delete_script         = undef,
+    Optional[String]                   $primary_conninfo              = undef,
+    Optional[String]                   $primary_ssh_command           = undef,
     Barman::RecoveryOptions            $recovery_options              = undef,
+    Optional[Stdlib::Absolutepath]     $recovery_staging_path         = undef,
     Barman::RetentionPolicy            $retention_policy              = undef,
     Barman::RetentionPolicyMode        $retention_policy_mode         = undef,
     Barman::ReuseBackup                $reuse_backup                  = undef,
     Optional[String]                   $slot_name                     = undef,
     Optional[Integer]                  $streaming_archiver_batch_size = undef,
+    Optional[Barman::BackupCompression]          $backup_compression            = undef,
+    Optional[Barman::BackupCompressionFormat]    $backup_compression_format     = undef,
+    Optional[String]                             $backup_compression_level      = undef,
+    Optional[Barman::BackupCompressionLocation]  $backup_compression_location   = undef,
+    Optional[Integer]                            $backup_compression_workers    = undef,
     Optional[String]                   $streaming_archiver_name       = undef,
     Optional[String]                   $streaming_backup_name         = undef,
     Optional[String]                   $tablespace_bandwidth_limit    = undef,
@@ -60,9 +88,27 @@ archiver_batch_size = <%= $archiver_batch_size %>
 <%- unless $backup_method =~ Undef { -%>
 backup_method = <%= $backup_method %>
 <%- } -%>
+<%- unless $backup_compression =~ Undef { -%>
+backup_compression = <%= $backup_compression %>
+<%- } -%>
+<%- unless $backup_compression_format =~ Undef { -%>
+backup_compression_format = <%= $backup_compression_format %>
+<%- } -%>
+<%- unless $backup_compression_level =~ Undef { -%>
+backup_compression_level = <%= $backup_compression_level %>
+<%- } -%>
+<%- unless $backup_compression_location =~ Undef { -%>
+backup_compression_location = <%= $backup_compression_location %>
+<%- } -%>
+<%- unless $backup_compression_workers =~ Undef { -%>
+backup_compression_workers = <%= $backup_compression_workers %>
+<%- } -%>
 backup_options = <%= $backup_options %>
 <%- unless $recovery_options =~ Undef { -%>
 recovery_options = <%= $recovery_options %>
+<%- } -%>
+<%- unless $recovery_staging_path =~ Undef { -%>
+recovery_staging_path = <%= $recovery_staging_path %>
 <%- } -%>
 <%- unless $bandwidth_limit =~ Undef { -%>
 bandwidth_limit = <%= $bandwidth_limit %>
@@ -76,8 +122,17 @@ check_timeout = <%= $check_timeout %>
 <%- unless $compression =~ Undef { -%>
 compression = <%= $compression %>
 <%- } -%>
+<%- unless $create_slot =~ Undef { -%>
+create_slot = <%= $create_slot %>
+<%- } -%>
+<%- unless $create_slot =~ Undef { -%>
+create_slot = <%= $create_slot %>
+<%- } -%>
 <%- unless $custom_compression_filter =~ Undef { -%>
 custom_compression_filter = <%= $custom_compression_filter %>
+<%- } -%>
+<%- unless $custom_compression_magic =~ Undef { -%>
+custom_compression_magic = <%= $custom_compression_magic %>
 <%- } -%>
 <%- unless $custom_decompression_filter =~ Undef { -%>
 custom_decompression_filter = <%= $custom_decompression_filter %>
@@ -85,12 +140,21 @@ custom_decompression_filter = <%= $custom_decompression_filter %>
 <%- unless $log_level =~ Undef { -%>
 log_level = <%= $log_level %>
 <%- } -%>
+<%- unless $max_incoming_wals_queue =~ Undef { -%>
+max_incoming_wals_queue = <%= $max_incoming_wals_queue %>
+<%- } -%>
 minimum_redundancy = <%= $minimum_redundancy %>
 <%- unless $network_compression =~ Undef { -%>
 network_compression = <%= $network_compression %>
 <%- } -%>
 <%- unless $parallel_jobs =~ Undef { -%>
 parallel_jobs = <%= $parallel_jobs %>
+<%- } -%>
+<%- unless $parallel_jobs_start_batch_period =~ Undef { -%>
+parallel_jobs_start_batch_period = <%= $parallel_jobs_start_batch_period %>
+<%- } -%>
+<%- unless $parallel_jobs_start_batch_size =~ Undef { -%>
+parallel_jobs_start_batch_size = <%= $parallel_jobs_start_batch_size %>
 <%- } -%>
 <%- unless $path_prefix =~ Undef { -%>
 path_prefix = <%= $path_prefix %>
@@ -107,6 +171,24 @@ post_backup_retry_script = <%= $post_backup_retry_script %>
 <%- unless $post_backup_script =~ Undef { -%>
 post_backup_script = <%= $post_backup_script %>
 <%- } -%>
+<%- unless $post_delete_retry_script =~ Undef { -%>
+post_delete_retry_script = <%= $post_delete_retry_script %>
+<%- } -%>
+<%- unless $post_delete_script =~ Undef { -%>
+post_delete_script = <%= $post_delete_script %>
+<%- } -%>
+<%- unless $post_recovery_retry_script =~ Undef { -%>
+post_recovery_retry_script = <%= $post_recovery_retry_script %>
+<%- } -%>
+<%- unless $post_recovery_script =~ Undef { -%>
+post_recovery_script = <%= $post_recovery_script %>
+<%- } -%>
+<%- unless $post_wal_delete_retry_script =~ Undef { -%>
+post_wal_delete_retry_script = <%= $post_wal_delete_retry_script %>
+<%- } -%>
+<%- unless $post_wal_delete_script =~ Undef { -%>
+post_wal_delete_script = <%= $post_wal_delete_script %>
+<%- } -%>
 <%- unless $pre_archive_retry_script =~ Undef { -%>
 pre_archive_retry_script = <%= $pre_archive_retry_script %>
 <%- } -%>
@@ -119,6 +201,33 @@ pre_backup_retry_script = <%= $pre_backup_retry_script %>
 <%- unless $pre_backup_script =~ Undef { -%>
 pre_backup_script = <%= $pre_backup_script %>
 <%- } -%>
+<%- unless $pre_delete_retry_script =~ Undef { -%>
+pre_delete_retry_script = <%= $pre_delete_retry_script %>
+<%- } -%>
+<%- unless $pre_delete_script =~ Undef { -%>
+pre_delete_script = <%= $pre_delete_script %>
+<%- } -%>
+<%- unless $pre_recovery_retry_script =~ Undef { -%>
+pre_recovery_retry_script = <%= $pre_recovery_retry_script %>
+<%- } -%>
+<%- unless $pre_recovery_script =~ Undef { -%>
+pre_recovery_script = <%= $pre_recovery_script %>
+<%- } -%>
+<%- unless $pre_wal_delete_retry_script =~ Undef { -%>
+pre_wal_delete_retry_script = <%= $pre_wal_delete_retry_script %>
+<%- } -%>
+<%- unless $pre_wal_delete_script =~ Undef { -%>
+pre_wal_delete_script = <%= $pre_wal_delete_script %>
+<%- } -%>
+<%- unless $primary_conninfo =~ Undef { -%>
+primary_conninfo = <%= $primary_conninfo %>
+<%- } -%>
+<%- unless $primary_ssh_command =~ Undef { -%>
+primary_ssh_command = <%= $primary_ssh_command %>
+<%- } -%>
+<%- unless $forward_config_path =~ Undef { -%>
+forward_config_path = <%= $forward_config_path %>
+<%- } -%>
 <%- unless $immediate_checkpoint =~ Undef { -%>
 immediate_checkpoint = <%= $immediate_checkpoint %>
 <%- } -%>
@@ -130,6 +239,12 @@ basebackup_retry_sleep = <%= $basebackup_retry_sleep %>
 <%- } -%>
 <%- unless $last_backup_maximum_age =~ Undef {  -%>
 last_backup_maximum_age = <%= $last_backup_maximum_age %>
+<%- } -%>
+<%- unless $last_backup_minimum_size =~ Undef {  -%>
+last_backup_minimum_size = <%= $last_backup_minimum_size %>
+<%- } -%>
+<%- unless $last_wal_maximum_age =~ Undef {  -%>
+last_wal_maximum_age = <%= $last_wal_maximum_age %>
 <%- } -%>
 retention_policy = <%= $retention_policy %>
 retention_policy_mode = <%= $retention_policy_mode %>
