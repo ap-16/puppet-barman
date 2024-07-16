@@ -1,0 +1,27 @@
+<%- |
+    Optional[String]                   $more_unit_entries    = undef,
+    Optional[String]                   $more_install_entries = undef,
+    | -%>
+# managed by puppet!
+
+[Unit]
+Description=barman systemd.target
+Description=all barman systemd.services are started by systemd.timers only
+Description=starts and stops all local barman systemd.timers
+
+After=network-online.target
+Requires=network-online.target
+After=timers.target
+Requires=timers.target
+Conflicts=shutdown.target
+<%- unless $more_unit_entries =~ Undef { -%>
+<%= $more_unit_entries %>
+<%- } -%>
+
+[Install]
+WantedBy=multi-user.target
+<%- unless $more_install_entries =~ Undef { -%>
+<%= $more_install_entries %>
+<%- } -%>
+
+

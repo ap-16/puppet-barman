@@ -1,0 +1,43 @@
+<%- |
+    String                             $postgres_server_id,
+    String                             $host_group,
+    String                             $backup_mday          = '*',
+    String                             $backup_wday          = ' ',
+    String                             $backup_hour          = '00',
+    String                             $backup_minute        = '00',
+    Optional[String]                   $more_unit_entries    = undef,
+    Optional[String]                   $more_timer_entries   = undef,
+    Optional[String]                   $more_install_entries = undef,
+    | -%>
+# managed by puppet!
+
+[Unit]
+Description = barman timer
+Description = schedules starts for <%= $postgres_server_id %> barman backup
+
+After       = network-online.target
+Requires    = network-online.target
+After       = timers.target
+Requires    = timers.target
+PartOf      = barman.target
+After       = barman.target
+Conflicts   = shutdown.target
+Conflicts   = reboot.target
+<%- unless $more_unit_entries =~ Undef { -%>
+<%= $more_unit_entries %>
+<%- } -%>
+
+[Timer]
+OnCalendar         = <%= $backup_wday %> *-*-<%= $backup_mday %> <%= $backup_hour %>:<%= $backup_minute %>:11
+Persistent         = true
+RandomizedDelaySec = 0
+<%- unless $more_timer_entries =~ Undef { -%>
+<%= $more_timer_entries %>
+<%- } -%>
+
+[Install]
+WantedBy = barman.target
+<%- unless $more_install_entries =~ Undef { -%>
+<%= $more_install_entries %>
+<%- } -%>
+

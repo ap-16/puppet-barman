@@ -1,6 +1,6 @@
-<$- |
+<%- |
     Boolean                            $archiver,
-    Variant[String,Boolean]            $compression,
+    Optional[Variant[String,Boolean]]  $compression                   = undef,
     Boolean                            $immediate_checkpoint,
     Optional[Integer]                  $max_incoming_wals_queue       = undef,
     Integer                            $minimum_redundancy,
@@ -97,7 +97,7 @@ archiver = <%= $archiver %>
 <%- unless $active =~ Undef { -%>
 active = <%= $active %>
 <%- } -%>
-<%- unless $archiver_batch_size =~ Undef { { -%>
+<%- unless $archiver_batch_size =~ Undef { -%>
 archiver_batch_size = <%= $archiver_batch_size %>
 <%- } -%>
 <%- unless $backup_directory =~ Undef { -%>

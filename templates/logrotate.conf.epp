@@ -1,5 +1,6 @@
 <%- |
     Stdlib::Absolutepath               $logfile,
+    Optional[String]                   $restart         = undef,
     String                             $user,
     String                             $group,
     | -%>
@@ -13,5 +14,10 @@
     missingok
     notifempty
     create 0640 <%= $user %> adm
+<%- unless $restart =~ Undef { -%>
+    postrotate
+        /usr/bin/systemctl restart <%= $restart %>
+    endscript
+<%- } -%>
     #create 0640 <%= $user %> <%= $group %>
 }

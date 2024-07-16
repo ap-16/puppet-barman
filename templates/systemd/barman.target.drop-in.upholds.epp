@@ -1,0 +1,8 @@
+<%- |
+    String $upholds,
+    | -%>
+# managed by puppet
+
+[Unit]
+Upholds = <%= $upholds %>
+

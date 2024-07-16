@@ -1,9 +1,9 @@
 <%- |
     String                             $user,
     Boolean                            $archiver,
-    Variant[String,Boolean]            $compression,
+    Optional[Variant[String,Boolean]]  $compression                   = undef,
     Stdlib::Absolutepath               $home,
-    Optional[Boolean]                  $forward_config_path           =undef,
+    Optional[Boolean]                  $forward_config_path           = undef,
     Boolean                            $immediate_checkpoint,
     Stdlib::Absolutepath               $logfile,
     Barman::LogLevel                   $log_level,

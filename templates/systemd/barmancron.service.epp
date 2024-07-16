@@ -1,0 +1,50 @@
+<%- |
+    String                             $barman_binary              = '/usr/bin/barman',
+    String                             $conf_file_path             = '/etc/barman.conf',
+    Optional[String]                   $assert_path_is_mount_point = undef,
+    Optional[String]                   $more_unit_entries          = undef,
+    Optional[String]                   $more_service_entries       = undef,
+    Optional[String]                   $more_install_entries       = undef,
+    | -%>
+# managed by puppet!
+
+[Unit]
+Description            = barman cron service
+Description            = starts barman cron
+
+AssertFileIsExecutable = <%= $barman_binary %>
+AssertFileNotEmpty     = <%= $conf_file_path %>
+<%- unless $assert_path_is_mount_point =~ Undef { -%>
+AssertPathIsMountPoint = <%= $assert_path_is_mount_point %>
+<%- } -%>
+
+After                  = network-online.target
+Requires               = network-online.target
+Conflicts              = shutdown.target
+Conflicts              = reboot.target
+<%- unless $more_unit_entries =~ Undef { -%>
+<%= $more_unit_entries %>
+<%- } -%>
+
+[Service]
+Type            = exec
+KillMode        = process
+Environment     = PGPASSFILE=/var/lib/barman/.pgpass
+ExecStart       = <%= $barman_binary %> -f json -c <%= $conf_file_path %> cron --keep-descriptors
+ExecStopPost    = /usr/bin/sleep 2
+Restart         = no
+StandardOutput  = journal
+StandardError   = journal
+User            = root
+Group           = root
+<%- unless $more_service_entries =~ Undef { -%>
+<%= $more_service_entries %>
+<%- } -%>
+
+[Install]
+# Service will be started via timer!
+<%- unless $more_install_entries =~ Undef { -%>
+<%= $more_install_entries %>
+<%- } -%>
+
+

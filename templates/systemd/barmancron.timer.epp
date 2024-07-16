@@ -1,0 +1,40 @@
+<%- |
+    String                             $host_group,
+    String                             $cron_hour            = '*',
+    String                             $cron_minute          = '*',
+    Optional[String]                   $more_unit_entries    = undef,
+    Optional[String]                   $more_timer_entries   = undef,
+    Optional[String]                   $more_install_entries = undef,
+    | -%>
+# managed by puppet!
+
+[Unit]
+Description = barman cron timer
+Description = schedules starts for barman cron
+
+After       = network-online.target
+Requires    = network-online.target
+After       = timers.target
+Requires    = timers.target
+PartOf      = barman.target
+After       = barman.target
+Conflicts   = shutdown.target
+Conflicts   = reboot.target
+<%- unless $more_unit_entries =~ Undef { -%>
+<%= $more_unit_entries %>
+<%- } -%>
+
+[Timer]
+OnCalendar         = <%= $cron_hour %>:<%= $cron_minute %>:41
+Persistent         = true
+RandomizedDelaySec = 0
+<%- unless $more_timer_entries =~ Undef { -%>
+<%= $more_timer_entries %>
+<%- } -%>
+
+[Install]
+WantedBy = barman.target
+<%- unless $more_install_entries =~ Undef { -%>
+<%= $more_install_entries %>
+<%- } -%>
+

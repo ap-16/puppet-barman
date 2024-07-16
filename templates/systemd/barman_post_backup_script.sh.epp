@@ -1,0 +1,67 @@
+<%- |
+    Optional[String]  $icinga_notify_tag = "ICINGA PROCESS_SERVICE_CHECK_RESULT",
+    | -%>
+#!/bin/bash
+
+# managed by puppet
+
+: ${BARMAN_BACKUP_DIR:=n/a}
+: ${BARMAN_BACKUP_ID:=-1}
+: ${BARMAN_CONFIGURATION:=n/a}
+: ${BARMAN_ERROR:=n/a}
+: ${BARMAN_PHASE:=-1}
+: ${BARMAN_PREVIOUS_ID:=-1}
+: ${BARMAN_RETRY:=-1}
+: ${BARMAN_SERVER:=n/a}
+: ${BARMAN_STATUS:=n/a}
+: ${BARMAN_VERSION:=-1}
+
+
+ICINGA_check_command="$0 $(systemctl status $$| grep CGroup | head -1)"
+
+ts=$(date +%s.%N)
+TIMESTAMP_W3CDTF=$(date -Ins -d @"$ts")
+
+ICINGA_check_source=$(hostname -f)
+MONITORED_SERVICE_NAME="barman backup $BARMAN_SERVER"
+MONITORED_HOST_NAME=$(hostname -f)
+
+ICINGA_plugin_output="$BARMAN_STATUS: $BARMAN_ERROR"
+ICINGA_performance_data=''
+
+if [ "X$BARMAN_STATUS" = "XDONE" ] ; then
+        ICINGA_exit_status=0
+else
+        ICINGA_exit_status=2
+fi
+
+JSON_STRING=$( jq -n \
+                  --arg \@TYPE "<%= $icinga_notify_tag %>" \
+                  --argjson \@VERSION 1 \
+                  --arg TIMESTAMP_W3CDTF "$TIMESTAMP_W3CDTF" \
+                  --arg ICINGA_type "Service" \
+                  --arg ICINGA_host.name "$MONITORED_HOST_NAME" \
+                  --arg ICINGA_service.name "$MONITORED_SERVICE_NAME" \
+                  --argjson ICINGA_exit_status $ICINGA_exit_status \
+                  --arg ICINGA_plugin_output "$ICINGA_plugin_output" \
+                  --argjson ICINGA_execution_end $ts \
+                  --arg ICINGA_performance_data "$ICINGA_performance_data" \
+                  --arg ICINGA_check_command "$ICINGA_check_command" \
+                  --arg ICINGA_check_source "$ICINGA_check_source" \
+                  --argjson ICINGA_execution_start $ts \
+                  --argjson ICINGA_ttl 90000 \
+                  --arg BARMAN_BACKUP_DIR "$BARMAN_BACKUP_DIR" \
+                  --arg BARMAN_BACKUP_ID "$BARMAN_BACKUP_ID" \
+                  --arg BARMAN_CONFIGURATION "$BARMAN_CONFIGURATION" \
+                  --arg BARMAN_ERROR "$BARMAN_ERROR" \
+                  --arg BARMAN_PHASE "$BARMAN_PHASE" \
+                  --arg BARMAN_PREVIOUS_ID "$BARMAN_PREVIOUS_ID" \
+                  --arg BARMAN_RETRY "$BARMAN_RETRY" \
+                  --arg BARMAN_SERVER "$BARMAN_SERVER" \
+                  --arg BARMAN_STATUS "$BARMAN_STATUS" \
+                  --arg BARMAN_VERSION "$BARMAN_VERSION" \
+                  '$ARGS.named')
+
+echo $JSON_STRING | systemd-cat jq -c .
+
+exit 0

@@ -11,6 +11,8 @@
 # @param ensure
 #   Ensure that Barman is installed. The default value is 'present'.
 #   Otherwise it will be set as 'absent'.
+# @param assert_path_is_mount_point
+#   ensure exising mount when start a systemd.service. Optional
 # @param dbuser
 #   Username used for connecting to the database
 # @param dbname
@@ -398,9 +400,10 @@ class barman (
   String                             $user,
   String                             $group,
   String                             $ensure,
+  Optional[String]                   $assert_path_is_mount_point    = undef,
   Boolean                            $archiver,
   Boolean                            $autoconfigure,
-  Variant[String,Boolean]            $compression,
+  Optional[Variant[String,Boolean]]  $compression                   = undef,
   String                             $dbuser,
   Stdlib::Absolutepath               $home,
   String                             $home_mode,
@@ -484,6 +487,7 @@ class barman (
   Optional[String]                   $custom_lines                   = undef,
   Optional[Hash]                     $servers                        = undef,
   Optional[Stdlib::Absolutepath]     $streaming_wals_directory       = undef,
+  Optional[Stdlib::Absolutepath]     $barman_binary                  = '/usr/bin/barman',
 ) {
   # when hash data is in servers, then fire-off barman::server define with that hash data
   if ($servers) {
@@ -536,6 +540,11 @@ class barman (
       require => Package['barman'],
       before  => File['/etc/barman/barman.conf'],
     }
+    file { '/etc/barman.conf':
+      ensure  => link,
+      target  => '/etc/barman/barman.conf',
+      require => File['/etc/barman/barman.conf'],
+    }
   }
 
   file { $conf_file_path:
@@ -584,12 +593,12 @@ class barman (
                      post_archive_script           => $post_archive_script,
                      post_backup_retry_script      => $post_backup_retry_script,
                      post_backup_script            => $post_backup_script,
-                     post_delete_retry_script      => post_delete_retry_script,
-                     post_delete_script            => post_delete_script,
-                     post_recovery_retry_script    => post_recovery_retry_script,
-                     post_recovery_script          => post_recovery_script,
-                     post_wal_delete_retry_script  => post_wal_delete_retry_script,
-                     post_wal_delete_script        => post_wal_delete_script,
+                     post_delete_retry_script      => $post_delete_retry_script,
+                     post_delete_script            => $post_delete_script,
+                     post_recovery_retry_script    => $post_recovery_retry_script,
+                     post_recovery_script          => $post_recovery_script,
+                     post_wal_delete_retry_script  => $post_wal_delete_retry_script,
+                     post_wal_delete_script        => $post_wal_delete_script,
                      pre_archive_retry_script      => $pre_archive_retry_script,
                      pre_archive_script            => $pre_archive_script,
                      pre_backup_retry_script       => $pre_backup_retry_script,
@@ -632,6 +641,21 @@ class barman (
     refreshonly => true
   }
 
+  if $facts['service_provider'] == 'systemd' {
+    $logrotate_template_restart = 'barmanlog2journal.service'
+
+    class { 'barman::systemd::barman_log2journal_service':
+      more_unit_entries     => undef,
+      more_service_entrie   => undef,
+      more_install_entries  => undef,
+      log_file_path         => $logfile,
+      host_group            => $barman::host_group,
+      ensure                => 'present',
+    }
+
+  } else {
+    $logrotate_template_restart = undef
+  }
   file { '/etc/logrotate.d/barman':
     ensure  => $ensure_file,
     owner   => 'root',
@@ -639,6 +663,7 @@ class barman (
     mode    => '0644',
     content => epp($logrotate_template, {
                      logfile                       => $logfile,
+                     restart                       => $logrotate_template_restart,
                      user                          => $user,
                      group                         => $group,
                }),
@@ -652,4 +677,16 @@ class barman (
       host_group         => $host_group,
       }
   }
+
+  if $facts['service_provider'] == 'systemd' {
+    ensure_packages ( ['jq'], { ensure      => 'present', })
+    file { '/usr/local/bin/barman_post_backup_script.sh' :
+      ensure  => file,
+      owner   => root,
+      group   => root,
+      mode    => '0755',
+      content => epp('barman/systemd/barman_post_backup_script.sh.epp', {}),
+    }
+  }
+
 }

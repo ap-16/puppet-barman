@@ -9,10 +9,18 @@
 # Many of the main configuration parameters can ( and *must*) be passed in
 # order to perform overrides.
 #
-# [*conninfo*] - Postgres connection string. *Mandatory*.
-# [*ssh_command*] - Command to open an ssh connection to Postgres. *Mandatory*.
-# [*activate*] - Whether this server is active in the barman configuration.
-# [*ensure*] - Ensure (or not) that single server Barman configuration files are
+# @param assert_path_is_mount_point
+# ensure exising mount when start a systemd.service. Optional
+# @param conninfo
+# Postgres connection string. *Mandatory*.
+# @param ssh_command
+# Command to open an ssh connection to Postgres. *Mandatory*.
+# @param active
+# Whether this server is active in the barman configuration.
+# @param server_name
+# Name of the server
+# @param ensure
+# Ensure (or not) that single server Barman configuration files are
 #              created. The default value is 'present'. Just 'absent' or
 #              'present' are the possible settings.
 # [*conf_template*] - path of the template file to build the Barman
@@ -377,6 +385,7 @@
 # Copyright 2012-2017 2ndQuadrant Italia
 #
 define barman::server (
+  Optional[String]               $assert_path_is_mount_point    = $barman::assert_path_is_mount_point,
   String                         $conninfo,
   String                         $ssh_command,
   Barman::ServerName             $server_name                   = $title,
@@ -399,7 +408,7 @@ define barman::server (
   Optional[Integer]              $basebackup_retry_sleep        = $barman::basebackup_retry_sleep,
   Optional[Integer]              $basebackup_retry_times        = $barman::basebackup_retry_times,
   Optional[Integer]              $check_timeout                 = $barman::check_timeout,
-  Variant[String,Boolean]        $compression                   = $barman::compression,
+  Optional[Variant[String,Boolean]]            $compression                   = $barman::compression,
   Optional[Barman::CreateSlot]   $create_slot                   = $barman::create_slot,
   Optional[String]               $custom_compression_filter     = $barman::custom_compression_filter,
   Optional[Any]                  $custom_compression_magix      = $barman::custom_compression_magix,
@@ -459,6 +468,18 @@ define barman::server (
   Barman::WalRetention           $wal_retention_policy          = $barman::wal_retention_policy,
   Optional[Stdlib::Absolutepath] $wals_directory                = undef,
   Optional[String]               $custom_lines                  = $barman::custom_lines,
+  Optional[String]               $backup_mday                   = '*',
+  Optional[String]               $backup_wday                   = ' ',
+  Optional[String]               $backup_hour                   = '00',
+  Optional[String]               $backup_minute                 = '00',
+  Optional[String]               $barman_binary                 = $barman::barman_binary,
+  Optional[String]               $conf_file_path                = $barman::conf_file_path,
+  Optional[String]               $more_backup_service_unit_entries    = undef,
+  Optional[String]               $more_backup_service_service_entries = undef,
+  Optional[String]               $more_backup_service_install_entries = undef,
+  Optional[String]               $more_backup_timer_unit_entries      = undef,
+  Optional[String]               $more_backup_timer_timer_entries     = undef,
+  Optional[String]               $more_backup_timer_install_entries   = undef,
 ) {
 
   # check if 'description' has been correctly configured
@@ -565,7 +586,22 @@ define barman::server (
     notice 'The \'custom_lines\' option is deprecated. Please use $conf_template for custom configuration'
   }
 
-  file { "/etc/barman.conf.d/${name}.conf":
+  if $facts['service_provider'] == 'systemd' {
+    $systemd_post_backup_script = '/usr/local/bin/barman_post_backup_script.sh'
+  } else {
+    $systemd_post_backup_script = undef
+  }
+  case $post_backup_script {
+    undef: {
+      $local_post_backup_script = $systemd_post_backup_script
+    }
+    default: {
+      $local_post_backup_script = $post_backup_script
+    }
+  }
+
+
+  file { "/etc/barman.d/${server_name}.conf":
     ensure  => $ensure,
     mode    => '0640',
     owner   => 'root',
@@ -609,13 +645,13 @@ define barman::server (
                      post_archive_retry_script     => $post_archive_retry_script,
                      post_archive_script           => $post_archive_script,
                      post_backup_retry_script      => $post_backup_retry_script,
-                     post_backup_script            => $post_backup_script,
-                     post_delete_retry_script      => post_delete_retry_script,
-                     post_delete_script            => post_delete_script,
-                     post_recovery_retry_script    => post_recovery_retry_script,
-                     post_recovery_script          => post_recovery_script,
-                     post_wal_delete_retry_script  => post_wal_delete_retry_script,
-                     post_wal_delete_script        => post_wal_delete_script,
+                     post_backup_script            => $local_post_backup_script,
+                     post_delete_retry_script      => $post_delete_retry_script,
+                     post_delete_script            => $post_delete_script,
+                     post_recovery_retry_script    => $post_recovery_retry_script,
+                     post_recovery_script          => $post_recovery_script,
+                     post_wal_delete_retry_script  => $post_wal_delete_retry_script,
+                     post_wal_delete_script        => $post_wal_delete_script,
                      pre_archive_retry_script      => $pre_archive_retry_script,
                      pre_archive_script            => $pre_archive_script,
                      pre_backup_retry_script       => $pre_backup_retry_script,
@@ -660,8 +696,8 @@ define barman::server (
   exec { "barman-check-${name}":
     command     => "barman check ${name} || true",
     provider    => shell,
-    subscribe   => File["/etc/barman.conf.d/${name}.conf"],
-    refreshonly => true
+    subscribe   => File["/etc/barman.d/${title}.conf"],
+    refreshonly => true,
   }
   if($barman::autoconfigure) {
     # export configuration for the pg_hba.conf
@@ -687,4 +723,32 @@ define barman::server (
     }
   }
 
+  if $facts['service_provider'] == 'systemd' {
+
+    require barman::systemd
+
+    barman::systemd::backup_service{ $server_name:
+      assert_path_is_mount_point => $assert_path_is_mount_point,
+      ensure                     => $ensure,
+      more_unit_entries          => $more_backup_service_unit_entries,
+      more_service_entrie        => $more_backup_service_service_entries,
+      more_install_entries       => $more_backup_service_install_entries,
+      barman_binary              => $barman_binary,
+      conf_file_path             => $conf_file_path,
+      server_file_path           => "/etc/barman.d/${server_name}.conf",
+      #tag                        => "barman-${barman::host_group}",
+    } ->
+    barman::systemd::backup_timer{ $server_name:
+      ensure               => $ensure,
+      server_name          => $server_name,
+      backup_mday          => $backup_mday,
+      backup_wday          => $backup_wday,
+      backup_hour          => $backup_hour,
+      backup_minute        => $backup_minute,
+      more_unit_entries    => $more_backup_timer_unit_entries,
+      more_timer_entries   => $more_backup_timer_timer_entries,
+      more_install_entries => $more_backup_timer_install_entries,
+      #tag                  => "barman-${barman::host_group}",
+    }
+  }
 }
